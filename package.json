@@ -19,6 +19,7 @@
   "dependencies": {
     "fastify": "^4.26.2",
     "postgres": "^3.4.4",
-    "redis": "^4.6.13"
+    "redis": "^4.6.13",
+    "zod": "^3.22.4"
   }
 }
