@@ -5,14 +5,14 @@ services:
     image: 'bitnami/postgresql:latest'
     ports:
       - '5432:5432'
-    environment:
+    env_file:
       - .env
 
   redis:
     image: 'bitnami/redis:latest'
     ports:
       - '6379:6379'
-    environment:
+    env_file:
       - .env
 
 
