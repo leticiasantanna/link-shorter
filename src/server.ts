@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import { z } from 'zod';
 import { sql } from './lib/postgres';
 import postgres from 'postgres';
+import { redis } from './lib/redis';
 
 const app = fastify();
 
@@ -9,11 +10,12 @@ app.get('/:code', async (request, reply) => {
   const linkSchema = z.object({
     code: z.string().min(3),
   });
+
   const { code } = linkSchema.parse(request.params);
 
   const result = await sql/* sql */ `
- SELECT id, original_url
- FROM short_link
+
+ SELECT id, original_url FROM short_link
  WHERE short_link.code = ${code}`;
 
   if (result.length === 0) {
@@ -21,11 +23,12 @@ app.get('/:code', async (request, reply) => {
   }
 
   const link = result[0];
-  return await reply.redirect(301, link.original_url);
+  return await reply.redirect(301, link.original_url );
 });
 
 app.get('/api/links', async () => {
   const result = await sql/* sql */ `
+
  SELECT * FROM short_link
  ORDER BY created_at DESC
  `;
@@ -60,6 +63,19 @@ app.post('/api/links', async (request, reply) => {
     return await reply.status(500).send({ message: 'Internal Server Error' });
   }
 });
+
+app.get('/api/metrics', async () => {
+  const result = await redis.zRangeByScoreWithScores('metrics', 0, 50)
+
+ const metrics = result.sort((a, b) => b.score - a.score).map((item) => {
+  return {
+    shortLinkId: Number(item.value),
+    clicks: item.score
+  }
+ })
+ 
+ return metrics
+})
 
 void app
   .listen({
